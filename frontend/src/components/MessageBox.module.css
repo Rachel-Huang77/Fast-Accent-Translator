@@ -1,0 +1,47 @@
+.boxError {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.boxSuccess {
+    background-color: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.boxInfo {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.closeBtn {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 18px;
+    margin-left: 8px;
+    line-height: 1;
+}

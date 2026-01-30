@@ -1,0 +1,65 @@
+
+services:
+  db:
+    image: postgres:16
+    container_name: fat-db
+    environment:
+      POSTGRES_DB: fat
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgre
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - fat-net
+    
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d fat"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: fat-backend
+    
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - ./backend/.env.docker
+    volumes:
+      - ./backend/app/models/tts_models:/app/app/models/tts_models:ro
+    ports:
+      - "8000:8000"
+    networks:
+      - fat-net
+    working_dir: /app
+
+    
+    command: >
+      sh -c "
+      aerich init-db || true &&
+      uvicorn app.main:app --host 0.0.0.0 --port 8000
+      "
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: fat-frontend
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
+    networks:
+      - fat-net
+
+volumes:
+  pgdata:
+
+networks:
+  fat-net:
+    driver: bridge

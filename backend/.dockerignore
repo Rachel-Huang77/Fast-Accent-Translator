@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Venv
+venv/
+.env.*
+.env
+
+# Git
+.git
+.gitignore
+
+# Editor
+.vscode/
+.idea/
+
+# Migrations cache 
+migrations/
+
+# Do not put the model in the images.
+app/models/tts_models

@@ -1,0 +1,411 @@
+/* ============ Layout ============ */
+.container {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  background: #eef1f6; /* Fallback again to prevent parent background from showing through */
+  position: relative;
+  z-index: 0;          /* Explicit layer to avoid being covered by unintended full-screen overlay */
+}
+
+/* ============ Sidebar ============ */
+.sidebar {
+  width: 260px;
+  background-color: #7b8bbd;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 12px;
+}
+
+/* Top gear + Hi, username (left-aligned with Conversations) */
+.sidebarTop {
+  height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-left: 0;
+  position: relative;
+}
+.settingsButton {
+  font-size: 30px;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  line-height: 1;
+  color: #0b1736;
+  outline: none !important;
+  box-shadow: none !important;
+  padding: 0;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.settingsButton:focus { outline: none; box-shadow: none; }
+.hiText {
+  color: #0b1736;
+  font-weight: 700;
+  font-size: 18px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Gear dropdown */
+.dropdown {
+  position: absolute;
+  top: 42px;
+  left: 0;
+  z-index: 20;
+  background: #fff;
+  width: 210px;
+  border: 1px solid #d0d0d0;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.dropdown button {
+  background: #fff;
+  color: #111;
+  text-align: left;
+  padding: 8px 10px;
+  border: none;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.dropdown button:hover { background: #f6f6f6; }
+.icon { width: 18px; display: inline-block; text-align: center; }
+
+/* Conversations header + New button */
+.convoHeader {
+  margin-top: 10px;
+  margin-bottom: 8px;
+  color: #1f2a44;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 0;
+}
+.newBtn {
+  background: #fff;
+  color: #111;
+  border: 1px solid #d0d0d0;
+  border-radius: 10px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+/* Conversations list */
+.convoList { list-style: none; margin: 0; padding: 0; overflow: auto; }
+.convoItem {
+  position: relative;
+  background: rgba(255,255,255,0.9);
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 6px 10px;
+  margin-bottom: 6px;
+  cursor: pointer;
+}
+.convoItem:hover { border-color: #e6e6e6; }
+.convoActive { border-color: #222 !important; background: #fff !important; }
+
+.convoRow { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.convoTitle {
+  font-weight: 600;
+  color: #14213d;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 14px;
+}
+
+/* Three-dot button + menu */
+.dotBtn {
+  opacity: 0;
+  transition: opacity .15s ease;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0 6px;
+}
+.dotBtnVisible { opacity: 1; }
+
+.dotMenu {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 25;
+  background: #fff;
+  border: 1px solid #d0d0d0;
+  border-radius: 8px;
+  min-width: 75px;
+  box-shadow: 0 8px 26px rgba(0,0,0,0.12);
+  overflow: hidden;
+}
+.dotMenuItem, .dotMenuItemDanger {
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dotMenuItem:hover { background: #f6f6f6; }
+.dotMenuItemDanger { color: #c02; }
+.dotMenuItemDanger:hover { background: #fff2f2; }
+
+.convoPreview {
+  color: #334;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+.convoEmpty { color: #223; opacity: .7; text-align: center; padding: 10px 0; }
+
+/* ============ Main ============ */
+.main {
+  position: relative;
+  flex: 1;
+  background-color: #f5ebeb;
+  display: grid;
+  grid-template-rows: 60px 1fr 90px;
+  grid-template-columns: 1fr;
+}
+.modelBox { align-self: start; justify-self: start; padding: 16px 24px 0; }
+.select {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #d0d0d0;
+  background: #fff;
+  min-width: 150px;
+}
+
+/* transcript & segments */
+.transcript {
+  margin: 8px 24px;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  padding: 16px;
+  overflow: auto;
+  white-space: pre-wrap;
+  line-height: 1.6;
+  font-size: 16px;
+  color: #222;
+}
+.placeholder { color: #888; }
+.segment { 
+  margin-bottom: 14px;
+  padding: 10px;
+  border-radius: 8px;
+  background: #f9f9f9;
+  border-left: 3px solid transparent;
+  transition: border-color 0.2s;
+}
+/* ✅ Add border color based on speaker */
+.segment[data-speaker="SPEAKER_00"] { border-left-color: #FF6B6B; }
+.segment[data-speaker="SPEAKER_01"] { border-left-color: #4ECDC4; }
+.segment[data-speaker="SPEAKER_02"] { border-left-color: #FFD93D; }
+
+.segmentMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+  color: #666;
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+/* ✅ Speaker tag styles */
+.speakerTag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.75em;
+  font-weight: 600;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  white-space: nowrap;
+}
+.segmentAudio { height: 28px; }
+.segmentText { color: #222; }
+.segmentLive .segmentMeta { color: #0a0; }
+
+/* ✅ Web Speech API preview text styles */
+.previewText {
+  color: #888;
+  font-style: italic;
+  opacity: 0.6;
+  margin-left: 4px;
+}
+
+.previewBadge {
+  display: inline-block;
+  background: #4ECDC4;
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* bottom left: Accent */
+.accentBox {
+  position: absolute;
+  bottom: 20px;  /* Restore original position */
+  left: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.accentLabel { font-size: 14px; color: #333; }
+
+/* Circular buttons (microphone/speaker) */
+.centerControls {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 44px;
+}
+.iconBtn {
+  width: 64px;
+  height: 64px;
+  min-width: 64px;
+  min-height: 64px;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  border: 3px solid #222;
+  background: #fff;
+  cursor: pointer;
+  padding: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  line-height: 1;
+  box-sizing: border-box;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  overflow: hidden;
+  font-size: 28px;
+}
+
+@keyframes rainbowPulse {
+  0%   { box-shadow:
+          0 0 0 0 rgba(79,172,254,.55),
+          0 0 0 0 rgba(56,239,125,.45),
+          0 0 0 0 rgba(250,112,154,.40); }
+  70%  { box-shadow:
+          0 0 0 10px rgba(79,172,254,0),
+          0 0 0 20px rgba(56,239,125,0),
+          0 0 0 30px rgba(250,112,154,0); }
+  100% { box-shadow:
+          0 0 0 0 rgba(79,172,254,0),
+          0 0 0 0 rgba(56,239,125,0),
+          0 0 0 0 rgba(250,112,154,0); }
+}
+.micActive { animation: rainbowPulse 1.6s ease-out infinite; }
+
+/* ===== Overlay ===== */
+.backdrop {
+  display: grid;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.25);
+  place-items: center;
+  z-index: 100;
+}
+
+/* generic modal */
+.modal {
+  width: min(420px, 92vw);
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.25);
+  overflow: hidden;
+}
+.modalHeader { padding: 14px 16px; font-weight: 600; border-bottom: 1px solid #eee; }
+.modalBody { padding: 16px; }
+.modalActions { display: flex; justify-content: flex-end; gap: 10px; padding: 12px 16px 16px; }
+.input { width: 100%; padding: 10px 12px; border: 1px solid #d0d0d0; border-radius: 8px; outline: none; }
+.btnGhost { background: #fff; color: #111; border: 1px solid #ccc; border-radius: 10px; padding: 8px 14px; cursor: pointer; }
+.btnPrimary { background: #111; color: #fff; border: 1px solid #111; border-radius: 10px; padding: 8px 14px; cursor: pointer; }
+
+/* ===== Fix: center the eye icon in Change Password modal ===== */
+/* Password field with eye (no global button selectors) */
+.field { position: relative; }
+.input { width: 100%; box-sizing: border-box; margin-bottom: 0; }
+.inputWithEye { padding-right: 40px; }
+
+.eyeBtn {
+  all: unset;
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: #7a7a7a;
+  -webkit-tap-highlight-color: transparent;
+  appearance: none;
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+.eyeBtn:hover,
+.eyeBtn:focus,
+.eyeBtn:active { color: #555; }
+.eyeBtn svg { width: 20px; height: 20px; display: block; }
+
+/* Prevent default outline on speaker button when focused to avoid visual "jump" */
+.iconBtn {
+  outline: none;
+}
+.iconBtn:focus {
+  outline: none;
+}
+
+/* Volume popover positioned directly above speaker button, doesn't occupy layout space */
+.volumeWrap {
+  position: relative;            /* As positioning reference */
+}
+
+.volumePopover {
+  position: absolute;
+  bottom: 78px;                  /* Distance from speaker button height, can be fine-tuned as needed */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+
+  /* Visual styles (can be fine-tuned as preferred) */
+  background: #fff;
+  border: 1px solid #d0d0d0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.14);
+}
+
+/* Slider width and alignment */
+.volumePopover input[type="range"] {
+  width: 180px;
+  margin: 0;                     /* Avoid extra top/bottom whitespace causing visual jump */
+  display: block;
+}

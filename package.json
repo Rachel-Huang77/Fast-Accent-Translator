@@ -1,0 +1,22 @@
+{
+  "name": "capstone-project",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "frontend",
+    "tests/frontend"
+  ],
+  "scripts": {
+    "test:frontend": "npm run test --workspace=tests/frontend",
+    "test:frontend:ui": "npm run test:ui --workspace=tests/frontend",
+    "test:frontend:run": "npm run test:run --workspace=tests/frontend",
+    "test:frontend:coverage": "npm run test:coverage --workspace=tests/frontend",
+    "test:backend": "cd tests/backend && pytest",
+    "test:backend:coverage": "cd tests/backend && pytest --cov=app --cov-report=html --cov-report=term",
+    "test:all": "npm run test:frontend:run && npm run test:backend",
+    "dev": "npm run dev --workspace=frontend",
+    "build": "npm run build --workspace=frontend"
+  }
+}
+

@@ -1,0 +1,25 @@
+# ========================================
+# 🧪 Backend Test Dependencies
+# ========================================
+# This file includes all production dependencies PLUS testing dependencies.
+# Use this file when setting up a development/testing environment.
+#
+# Installation:
+#   pip install -r requirements.txt
+#   (from tests/backend directory, or use absolute path)
+#
+# For production installation (without tests):
+#   cd ../../backend && pip install -r requirements.txt
+# ========================================
+
+# Include all production dependencies from backend
+-r ../../backend/requirements.txt
+
+# ------------------------------------------
+# 🧪 Testing Dependencies
+# ------------------------------------------
+pytest>=7.4.0  # Testing framework
+pytest-asyncio>=0.21.0  # Async test support
+pytest-cov>=7.0.0  # Coverage reporting
+faker>=38.0.0  # Test data generation
+

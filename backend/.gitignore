@@ -1,0 +1,42 @@
+# env & secrets
+.env
+.env.docker
+*.pem
+*.key
+
+# node
+node_modules/
+npm-debug.log*
+pnpm-lock.yaml
+yarn.lock
+
+# python (若有)
+__pycache__/
+*.pyc
+*.pyo
+
+# build artifacts
+dist/
+build/
+
+# Testing & Coverage Reports
+htmlcov/
+.pytest_cache/
+.coverage
+*.coverage
+coverage.xml
+coverage.json
+.coverage.*
+.cache/
+*.log
+.hypothesis/
+.tox/
+.pytest_cache/
+
+# # Test code
+# tests/
+# tests/README.md
+# Test code
+
+app/models/tts_models/*
+!app/models/tts_models/README.md

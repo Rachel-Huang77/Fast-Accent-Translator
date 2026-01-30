@@ -1,0 +1,158 @@
+/* frontend/src/pages/Admin/AdminDashboard.module.css */
+
+.container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #f5f7fa;
+}
+
+/* Top navigation bar */
+.header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  padding: 20px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.badge {
+  padding: 4px 12px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.username {
+  font-size: 14px;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.btnLogout {
+  padding: 8px 20px;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btnLogout:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Tab navigation */
+.tabs {
+  background: #fff;
+  padding: 0 32px;
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid #ebeef5;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 24px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #606266;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  top: 2px;
+}
+
+.tab:hover {
+  color: #409eff;
+  background-color: #f5f7fa;
+}
+
+.tabActive {
+  color: #409eff;
+  border-bottom-color: #409eff;
+}
+
+.tabIcon {
+  width: 20px;
+  height: 20px;
+}
+
+/* Main content area */
+.main {
+  flex: 1;
+  padding: 0;
+  overflow-y: auto;
+}
+
+/* Bottom footer */
+.footer {
+  padding: 12px 0;
+  text-align: center;
+  background: #fff;
+  border-top: 1px solid #ebeef5;
+  color: #909399;
+  font-size: 12px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 20px;
+  }
+
+  .headerLeft,
+  .headerRight {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .tabs {
+    padding: 0 20px;
+    overflow-x: auto;
+  }
+
+  .tab {
+    padding: 14px 20px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .tabIcon {
+    width: 18px;
+    height: 18px;
+  }
+}
