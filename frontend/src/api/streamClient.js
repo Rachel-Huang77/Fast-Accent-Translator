@@ -1,6 +1,14 @@
 // Import WebSocket URLs from unified API configuration
 import { WS_UPLOAD_URL, WS_TEXT_URL, WS_TTS_URL } from '../config/api.js';
 
+function withToken(url) {
+  const token = localStorage.getItem("authToken");
+  if (!token) return url;
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}token=${encodeURIComponent(token)}`;
+}
+
+
 export function createStreamClient({
   conversationId,
   model = "free",
@@ -201,7 +209,7 @@ export function createStreamClient({
 
     // 1) Text channel
     await new Promise((resolve, reject) => {
-      textWS = new WebSocket(WS_TEXT_URL);
+      textWS = new WebSocket(withToken(WS_TEXT_URL));
       textWS.onopen = () => {
         console.log("[client] textWS open, subscribe", conversationId);
         sendJSON(textWS, { type: "subscribe", conversationId });
@@ -232,7 +240,7 @@ export function createStreamClient({
     if (WS_TTS_URL) {
       try {
         await new Promise((resolve, reject) => {
-          ttsWS = new WebSocket(WS_TTS_URL);
+          ttsWS = new WebSocket(withToken(WS_TTS_URL));
           ttsWS.binaryType = "arraybuffer";
 
           ttsWS.onopen = () => {
@@ -294,7 +302,7 @@ export function createStreamClient({
 
     // 3) Upload channel
     await new Promise((resolve, reject) => {
-      uploadWS = new WebSocket(WS_UPLOAD_URL);
+      uploadWS = new WebSocket(withToken(WS_UPLOAD_URL));
       uploadWS.onopen = () => {
         console.log("[client] uploadWS open");
         sendJSON(uploadWS, {
