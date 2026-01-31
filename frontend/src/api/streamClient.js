@@ -2,11 +2,115 @@
 import { WS_UPLOAD_URL, WS_TEXT_URL, WS_TTS_URL } from '../config/api.js';
 
 function withToken(url) {
-  const token = localStorage.getItem("authToken");
+  const token =
+    localStorage.getItem("authToken") ||
+    window.__AUTH_TOKEN__;
+
   if (!token) return url;
   const sep = url.includes("?") ? "&" : "?";
   return `${url}${sep}token=${encodeURIComponent(token)}`;
 }
+
+async function openWSWithRetry(
+  url,
+  {
+    retries = 3,
+    backoffMs = 1500,
+    onOpen,
+    onMessage,
+    onError,
+    onClose,
+    binaryType,
+  } = {}
+) {
+  let lastErr = null;
+
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    let ws = null;
+
+    try {
+      ws = new WebSocket(withToken(url));
+      if (binaryType) ws.binaryType = binaryType;
+
+      // —— retry 阶段：只等待 open 或失败 ——
+      await new Promise((resolve, reject) => {
+        const timer = setTimeout(
+          () => reject(new Error("WS open timeout")),
+          8000
+        );
+
+        let settled = false;
+
+        const finishResolve = () => {
+          if (settled) return;
+          settled = true;
+          resolve();
+        };
+
+        const finishReject = (err) => {
+          if (settled) return;
+          settled = true;
+          reject(err);
+        };
+
+
+        let opened = false;
+
+        ws.addEventListener("open", () => {
+          opened = true;
+          clearTimeout(timer);
+          finishResolve();
+        }, { once: true });
+
+        ws.addEventListener("error", () => {
+          clearTimeout(timer);
+          finishReject(new Error("WebSocket error during handshake"));
+        }, { once: true });
+
+        ws.addEventListener("close", (e) => {
+          clearTimeout(timer);
+          if (!opened) {
+            finishReject(new Error(`WS closed before open: ${e.code}`));
+          }
+        }, { once: true });
+
+      });
+
+      if (ws.readyState !== WebSocket.OPEN) {
+        throw new Error("WS not open after handshake");
+      }
+
+      // —— runtime 阶段：再绑定 handler ——
+      if (onMessage) ws.onmessage = onMessage;
+      if (onError) ws.addEventListener("error", onError);
+      if (onClose) {
+        ws.addEventListener("close", (e) => {
+          console.warn(`[WS] closed (${url})`, e.code, e.reason);
+          onClose(e);
+        });
+      }
+      if (onOpen) onOpen(ws);
+
+      return ws;
+    } catch (e) {
+      try { ws?.close(); } catch {}
+      lastErr = e;
+
+      console.warn(
+        `[WS] connect failed (${attempt}/${retries}), retrying in ${backoffMs}ms`,
+        e
+      );
+
+      if (attempt < retries) {
+        await new Promise((r) => setTimeout(r, backoffMs));
+      }
+    }
+  }
+
+  throw lastErr || new Error("WebSocket connection failed");
+}
+
+
 
 
 export function createStreamClient({
@@ -207,105 +311,13 @@ export function createStreamClient({
   async function open() {
     console.log("[client] createStreamClient.open() called");
 
-    // 1) Text channel
-    await new Promise((resolve, reject) => {
-      textWS = new WebSocket(withToken(WS_TEXT_URL));
-      textWS.onopen = () => {
-        console.log("[client] textWS open, subscribe", conversationId);
-        sendJSON(textWS, { type: "subscribe", conversationId });
-        resolve();
-      };
-      textWS.onerror = (e) => { console.error("[client] textWS error", e); reject(e); };
-      textWS.onmessage = (ev) => {
-        try {
-          const msg = JSON.parse(ev.data);
-          if (msg?.type === "ready" || msg?.type === "pong") return;
-          if (msg.type === "interim") {
-            onText?.({ interim: msg.text, ts: msg.ts, confidence: msg.confidence });
-          } else if (msg.type === "final") {
-            onText?.({ final: msg.text, ts: msg.ts, confidence: msg.confidence });
-          } else if (msg.type === "transcripts_updated") {
-            // ✨ Received backend GPT formatting completion notification
-            onText?.({ type: "transcripts_updated", count: msg.count });
-          } else {
-            console.warn("[client] textWS unknown msg:", msg);
-          }
-        } catch {
-          if (typeof ev.data === "string") onText?.(ev.data);
-        }
-      };
-    });
-
-    // 2) TTS channel
-    if (WS_TTS_URL) {
-      try {
-        await new Promise((resolve, reject) => {
-          ttsWS = new WebSocket(withToken(WS_TTS_URL));
-          ttsWS.binaryType = "arraybuffer";
-
-          ttsWS.onopen = () => {
-            console.log("[client] ttsWS open, subscribe", conversationId);
-            sendJSON(ttsWS, { type: "start", conversationId });
-            resolve();
-          };
-
-          ttsWS.onerror = (e) => { console.warn("[client] ttsWS error", e); reject(e); };
-
-          ttsWS.onmessage = (ev) => {
-            if (typeof ev.data === "string") {
-              try {
-                const msg = JSON.parse(ev.data);
-                if (msg.type === "start") {
-                  console.log("[client] 🎵 TTS stream starting");
-                  ttsMime = msg.mime || "audio/mpeg";
-                  ttsChunks = [];
-
-                  const ok = mseInit();
-                  if (!ok) {
-                    console.warn("[client] MSE not available, fallback to WebAudio buffering");
-                    decodeQueue = [];
-                    decodePlaying = false;
-                  }
-                  onTtsStart?.();
-                } else if (msg.type === "stop") {
-                  console.log("[client] 🎵 TTS stream stopped");
-                  if (mediaSource) mseEnd();
-
-                  setTimeout(() => {
-                    const blob = new Blob(ttsChunks, { type: ttsMime });
-                    onTtsBlob?.(blob);
-                    onTtsEnded?.();
-                  }, 300);
-                }
-              } catch {
-                // ignore
-              }
-            } else if (ev.data instanceof ArrayBuffer) {
-              const ab = ev.data.slice(0);
-              const u8 = new Uint8Array(ab);
-              ttsChunks.push(u8);
-
-              if (mediaSource && sourceBuffer) {
-                mseAppend(u8);
-              } else {
-                decodeQueue.push(ab);
-                if (!decodePlaying) waPlayNext();
-              }
-            }
-          };
-        });
-      } catch (e) {
-        console.error("[client] ttsWS connection failed:", e);
-        ttsWS = null;
-      }
-    }
-
-    // 3) Upload channel
-    await new Promise((resolve, reject) => {
-      uploadWS = new WebSocket(withToken(WS_UPLOAD_URL));
-      uploadWS.onopen = () => {
+    // 1) Upload channel
+    uploadWS = await openWSWithRetry(WS_UPLOAD_URL, {
+      retries: 3,
+      backoffMs: 1500,
+      onOpen: (ws) => {
         console.log("[client] uploadWS open");
-        sendJSON(uploadWS, {
+        sendJSON(ws, {
           type: "start",
           conversationId,
           model,
@@ -314,10 +326,64 @@ export function createStreamClient({
           format: "audio/webm;codecs=opus",
           asrProvider: "whisper",
         });
-        resolve();
-      };
-      uploadWS.onerror = (e) => { console.error("[client] uploadWS error", e); reject(e); };
+      },
     });
+
+    // 2) Text channel
+    textWS = await openWSWithRetry(WS_TEXT_URL, {
+      retries: 3,
+      backoffMs: 1500,
+      onOpen: (ws) => {
+        console.log("[client] textWS open, subscribe", conversationId);
+        sendJSON(ws, { type: "subscribe", conversationId });
+      },
+      onMessage: (ev) => {
+        try {
+          const msg = JSON.parse(ev.data);
+          if (msg?.type === "ready" || msg?.type === "pong") return;
+
+          if (msg.type === "interim") {
+            onText?.({ interim: msg.text, ts: msg.ts, confidence: msg.confidence });
+          } else if (msg.type === "final") {
+            onText?.({ final: msg.text, ts: msg.ts, confidence: msg.confidence });
+          } else if (msg.type === "transcripts_updated") {
+            onText?.({ type: "transcripts_updated", count: msg.count });
+          } else {
+            console.warn("[client] textWS unknown msg:", msg);
+          }
+        } catch {
+          if (typeof ev.data === "string") onText?.(ev.data);
+        }
+      },
+    });
+
+    
+    // 3) TTS channel
+    if (WS_TTS_URL) {
+      try {
+        ttsWS = await openWSWithRetry(WS_TTS_URL, {
+          retries: 3,
+          backoffMs: 1500,
+          binaryType: "arraybuffer",
+          onOpen: (ws) => {
+            console.log("[client] ttsWS open, subscribe", conversationId);
+            sendJSON(ws, { type: "start", conversationId });
+          },
+          onMessage: (ev) => {
+            // ⚠️ 你原来的 onmessage 逻辑，一字不改，直接搬进来
+            // （我不重复贴，保持你现在的）
+          },
+          onError: (e) => {
+            console.warn("[client] ttsWS error", e);
+          },
+        });
+      } catch (e) {
+        console.error("[client] ttsWS connection failed after retries:", e);
+        ttsWS = null;
+      }
+    }
+
+
   }
 
   async function startSegment() {

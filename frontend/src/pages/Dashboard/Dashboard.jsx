@@ -129,6 +129,11 @@ export default function Dashboard() {
   const [activeId, setActiveId] = useState(() => localStorage.getItem(ACTIVE_KEY));
   const activeConv = convos.find((c) => c.id === activeId) || null;
 
+
+  /** ===== streaming segment state (NEW) ===== */
+  const [pendingFinal, setPendingFinal] = useState(null);
+  const [isCommitting, setIsCommitting] = useState(false);
+
   useEffect(() => {
     if (!userId) return;
     (async () => {
@@ -389,11 +394,37 @@ export default function Dashboard() {
           const { interim, final } = payload;
           if (interim != null) setInterimText(interim);
           if (final) {
+            // 1️⃣ UI 显示 final（但不清空）
             setInterimText("");
-            setLiveTranscript((prev) => (prev ? prev + final : final));
-            // —— After receiving final text, directly finish with final to avoid timing issues
-            setTimeout(() => { finishSegment(final); }, 0);
+            setLiveTranscript(final);
+            setPendingFinal(final);
+
+            // 2️⃣ 立刻开始 commit（这是唯一入口）
+            if (!isCommitting) {
+              setIsCommitting(true);
+
+              try {
+                const seg = await appendSegment(convId, {
+                  transcript: final,
+                  audioUrl: segAudioUrlRef.current ?? null,
+                });
+
+                // 3️⃣ backend 已确认：现在才清 UI
+                setLiveTranscript("");
+                setPendingFinal(null);
+
+                // 4️⃣ ✅ 统一的 TTS 触发点（Step 4）
+                streamRef.current?.requestTts(final);
+
+              } catch (e) {
+                console.error("[Dashboard] appendSegment failed, keep text", e);
+                // ❗什么都不做，UI 保留
+              } finally {
+                setIsCommitting(false);
+              }
+            }
           }
+
         }
         if (transcriptBoxRef.current) {
           transcriptBoxRef.current.scrollTop = transcriptBoxRef.current.scrollHeight;
