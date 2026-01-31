@@ -49,7 +49,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(""); // New: error message
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -66,36 +66,37 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const resp = await login({ username: u, password: p });
-      // Defensive check: ensure resp exists and has ok property
-      if (resp && resp.ok === true) {
-        // store session
-        localStorage.setItem("authToken", resp.token || "mock-token");
-        localStorage.setItem("authUserId", resp.user?.id || u);
-        localStorage.setItem("authUsername", resp.user?.username || u);
-        localStorage.setItem("authUserRole", resp.user?.role || "user");
 
-        // Navigate based on role: admin → /admin, regular user → /dashboard
-        if (resp.user?.role === "admin") {
+      if (resp && resp.ok === true) {
+        if (!resp.token) {
+          throw new Error("Missing access token");
+        }
+
+        // Store JWT and user info
+        localStorage.setItem("authToken", resp.token);
+        localStorage.setItem("authUserId", resp.user.id);
+        localStorage.setItem("authUsername", resp.user.username);
+        localStorage.setItem("authUserRole", resp.user.role);
+
+        // Redirect by role
+        if (resp.user.role === "admin") {
           navigate("/admin");
         } else {
           navigate("/dashboard");
         }
       } else {
-        // Unified message processing, avoid [Object Object]
         const msg =
-          resp && typeof resp.message === "string"
+          typeof resp?.message === "string"
             ? resp.message
-            : resp?.message?.message ||
-              resp?.message?.detail ||
-              "Login failed. Please check your username and password.";
+            : "Login failed. Please check your username and password.";
         setError(msg);
       }
     } catch (err) {
-      const msg =
+      setError(
         typeof err?.message === "string"
           ? err.message
-          : "Unexpected error. Please try again.";
-      setError(msg);
+          : "Unexpected error. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -108,7 +109,6 @@ export default function LoginPage() {
       </h1>
 
       <div className={styles.card}>
-        {/* Unified error message area */}
         <MessageBox
           type="error"
           message={error}

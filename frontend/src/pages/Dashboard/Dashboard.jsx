@@ -15,6 +15,7 @@ import {
 } from "../../api/conversations";
 import { createStreamClient } from "../../api/streamClient";
 import { changePassword } from "../../api/auth";
+import { apiRequest } from "../../config/api";
 
 /** ===== Constants ===== */
 const ACCENTS = [
@@ -26,7 +27,7 @@ const ACCENTS = [
 ];
 const USE_LOCAL_SPEECH = (import.meta.env.VITE_USE_LOCAL_SPEECH || "0") === "1";
 
-// ✅ Speaker color mapping
+// Speaker color mapping
 const SPEAKER_COLORS = {
   "SPEAKER_00": "#FF6B6B",  // Red
   "SPEAKER_01": "#4ECDC4",  // Cyan
@@ -458,39 +459,39 @@ export default function Dashboard() {
   /** ===== Streaming Translation TTS Request ===== */
   const requestStreamingTts = async (text) => {
     if (!text || !currentConvIdRef.current) return;
-    
+
     try {
-      console.log(`[Streaming TTS] Requesting for: "${text.substring(0, 50)}..."`);
-      
-      // Call backend TTS API (ensure path is correct)
-      const response = await fetch('http://localhost:8000/api/v1/tts/synthesize', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({
-          text: text,
+      console.log(
+        `[Streaming TTS] Requesting for: "${text.substring(0, 50)}..."`
+      );
+
+      // 正确方式：统一走 apiRequest（JWT 自动注入）
+      const r = await apiRequest("/tts/synthesize", {
+        method: "POST",
+        body: {
+          text,
           accent: selectedAccent,
           model: selectedModel,
-        }),
+        },
       });
-      
-      if (!response.ok) {
-        console.error('[Streaming TTS] Request failed:', response.status);
+
+      if (!r.ok) {
+        console.error("[Streaming TTS] Request failed:", r.message);
         return;
       }
-      
-      const audioBlob = await response.blob();
-      console.log(`[Streaming TTS] Received audio: ${audioBlob.size} bytes`);
-      
-      // Add to playback queue
+
+      // 后端返回 audio blob 的话，apiRequest 不适合
+      // 如果你当前后端是直接返回 audio stream / blob，
+      // 那么推荐后端改成返回 base64 / url
+      // 或单独为 TTS 保留一个 fetch（但必须带 token）
+
+      const audioBlob = r.data;
       enqueueTts(audioBlob);
-      
     } catch (err) {
-      console.error('[Streaming TTS] Error:', err);
+      console.error("[Streaming TTS] Error:", err);
     }
   };
+
 
   /** ===== TTS Audio Queue Playback ===== */
   const playTtsAudio = async (audioBlob) => {
